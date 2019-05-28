@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
+	"time"
 )
 
 var (
@@ -27,6 +28,20 @@ func WsServer(w http.ResponseWriter,r *http.Request,p httprouter.Params) {
 		panic(e.Error())
 	}
 
+	go func() {
+		for  {
+			err := connection.WriteMessage([]byte("heartbeat"))
+			if err!=nil{
+				return
+			}
+			time.Sleep(time.Second)
+		}
+	}()
+
+	for {
+		data, _ := connection.ReadMessage()
+		connection.WriteMessage(data)
+	}
 
 }
 

@@ -3,6 +3,7 @@ package impl
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
+	"sync"
 )
 
 type Connection struct {
@@ -11,6 +12,10 @@ type Connection struct {
 	outChan chan []byte // 存储返送消息
 	closeChan chan byte // 关闭通知
 }
+
+var (
+	once sync.Once
+)
 
 // 初始化长连接
 func InitConnection(wsConn *websocket.Conn) (conn *Connection,err error) {
@@ -46,7 +51,10 @@ func (conn *Connection) Close() {
 	// 线程安全,可重入的close
 	conn.wsConn.Close()
 
-
+	once.Do(func() {
+		close(conn.inChan)
+		close(conn.outChan)
+	})
 }
 
 // 内部实现
